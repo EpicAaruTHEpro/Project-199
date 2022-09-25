@@ -7,6 +7,7 @@ port = 8000
 server.bind((ipaddress, port))
 server.listen()
 clients = []
+nicknames = []
 questions = ["What is the largest state in the USA? \n a.Texas \n b.California \n c.Alaska \n d.Washington"]
 answers = ["c"]
 print("Server is running")
@@ -21,6 +22,10 @@ def broadcast(message, connection):
 def remove(connection) :
     if connection in clients:
         clients.remove(connection)
+
+def remove_nickname(nickname):
+    if nickname in nicknames:
+        nicknames.remove(nickname)
 
 def get_random_question_answer():
     random_index = random.randint(0,len(questions)-1)
@@ -54,11 +59,17 @@ def clientThread(conn, nickname) :
                 index,question,answer = get_random_question_answer(conn)
             else: 
                 remove(conn)
+                remove_nickname(nickname)
         except:
             continue
 while True:
     conn, addr = server.accept()
+    conn.send("NICKNAME".encode("utf-8"))
+    nickname = conn.recv(2048).decode("utf-8")
+    nicknames.append(nickname)
     clients.append(conn)
-    print(addr[0] + " connected")
-    new_thread = Thread(target = clientThread,args=(conn))
+    message = "{} joined!!!!!!!!".format(nickname)
+    print(message)
+    broadcast(message,conn)
+    new_thread = Thread(target = clientThread, args = (conn, addr))
     new_thread.start()
